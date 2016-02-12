@@ -46,7 +46,7 @@ func TestParseInline(t *testing.T) {
 		},
 	}
 	for _, test := range tests {
-		_, out, err := parseInline([]byte(test.input + "\n"))
+		length, out, err := parseInline([]byte(test.input + "\n"))
 		if err != nil {
 			t.Error(err)
 			continue
@@ -64,6 +64,9 @@ func TestParseInline(t *testing.T) {
 				t.Errorf("expected %+#v, got %+#v", test.output, output)
 				break
 			}
+		}
+		if length != len(test.input)+1 {
+			t.Errorf("expected length %d, got %d", len(test.input)+1, length)
 		}
 	}
 }
