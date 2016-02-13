@@ -2,7 +2,7 @@ package resp
 
 import "testing"
 
-func TestParseInline(t *testing.T) {
+func TestParseCommand(t *testing.T) {
 	tests := []struct {
 		input  string
 		output []string
@@ -21,6 +21,10 @@ func TestParseInline(t *testing.T) {
 		},
 		{
 			`SET 'some key' somevalue`,
+			[]string{"SET", "some key", "somevalue"},
+		},
+		{
+			`  	SET 'some key' 			 somevalue  `,
 			[]string{"SET", "some key", "somevalue"},
 		},
 		{
@@ -44,9 +48,22 @@ func TestParseInline(t *testing.T) {
 			`this'is' a"bit" str"ange"`,
 			[]string{"thisis", "abit", "strange"},
 		},
+		{
+			`"\x01\x23\x45\x67\x89\xab\xcd\xef"`,
+			[]string{"\x01\x23\x45\x67\x89\xab\xcd\xef"},
+		},
+		// Array of Bulk String variants
+		{
+			"*2\r\n$3\r\nGET\r\n$10\r\nsome value\r\n",
+			[]string{"GET", "some value"},
+		},
 	}
 	for _, test := range tests {
-		length, out, err := parseInline([]byte(test.input + "\n"))
+		cmd := []byte(test.input)
+		if cmd[len(cmd)-1] != '\n' {
+			cmd = append(cmd, '\n')
+		}
+		length, out, err := parseCommand(cmd)
 		if err != nil {
 			t.Error(err)
 			continue
@@ -65,7 +82,7 @@ func TestParseInline(t *testing.T) {
 				break
 			}
 		}
-		if length != len(test.input)+1 {
+		if length != len(cmd) {
 			t.Errorf("expected length %d, got %d", len(test.input)+1, length)
 		}
 	}
@@ -74,12 +91,29 @@ func TestParseInline(t *testing.T) {
 func TestUnbalancedQuotes(t *testing.T) {
 	tests := []string{
 		`SET 'some key`,
+		`SET 'some 'key`,
 		`SET "some key`,
+		`SET "some "key`,
 	}
 	for _, test := range tests {
-		_, _, err := parseInline([]byte(test + "\n"))
+		_, _, err := parseCommand([]byte(test + "\n"))
 		if err != errUnbalancedQuotes {
 			t.Errorf("expected errUnbalancedQuotes, got %v", err)
+		}
+	}
+}
+
+func TestIncompleteCommand(t *testing.T) {
+	tests := []string{
+		`SET some' key' somevalue`,
+		"*2\r\n$3\r\nGET\r\n$4test\r",
+	}
+	for _, test := range tests {
+		for n := len(test); n > 0; n-- {
+			_, _, err := parseCommand([]byte(test[:n]))
+			if err != errIncompleteCommand {
+				t.Errorf("expected errUnbalancedQuotes, got %v", err)
+			}
 		}
 	}
 }
