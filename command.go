@@ -8,36 +8,48 @@ import (
 
 type CommandReader struct {
 	r   io.Reader
-	buf []byte
+	buf *bytes.Buffer
 }
 
 func NewCommandReader(r io.Reader) *CommandReader {
 	return &CommandReader{
-		r: r,
+		r:   r,
+		buf: new(bytes.Buffer),
 	}
 }
 
 func (r *CommandReader) Read() (parts [][]byte, err error) {
 	var length int
 	for err == nil {
-		length, parts, err = parseCommand(r.buf)
+		length, parts, err = parseCommand(r.buf.Bytes())
 		if err == errIncompleteCommand {
 			err = r.readmore()
 		} else if err == nil {
 			break
 		}
 	}
-	r.buf = r.buf[length:]
+	r.buf.Next(length)
 	return
 }
 
-func (r *CommandReader) readmore() error {
-	p := make([]byte, 1024)
-	n, err := r.r.Read(p)
-	if n > 0 {
-		r.buf = append(r.buf, p[:n]...)
+func (r *CommandReader) readmore() (err error) {
+	defer func() {
+		if perr := recover(); perr != nil {
+			if perr == bytes.ErrTooLarge {
+				err = bytes.ErrTooLarge
+			} else {
+				panic(perr)
+			}
+		}
+	}()
+	buf := make([]byte, 1024)
+	var n int
+	n, err = r.r.Read(buf)
+	if err != nil {
+		return
 	}
-	return err
+	_, err = r.buf.Write(buf[:n])
+	return
 }
 
 var errIncompleteCommand = errors.New("incomplete command")
@@ -81,7 +93,7 @@ func parseCommand(data []byte) (length int, parts [][]byte, err error) {
 			length += pos
 			return
 		}
-		parts, err = parseInlineCommand(data)
+		parts, err = parseInlineCommand(data[:length])
 		return
 	}
 	length += 1
