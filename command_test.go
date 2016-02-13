@@ -128,7 +128,7 @@ func TestCommandReader(t *testing.T) {
 	}
 	r := NewCommandReader(perByteReader{r: input})
 	for _, test := range commandTests {
-		out, err := r.Read()
+		_, out, err := r.Read()
 		if err != nil {
 			t.Error(err)
 		}
@@ -163,7 +163,7 @@ func TestCommandReaderFullRead(t *testing.T) {
 	}
 	r := NewCommandReader(input)
 	for _, test := range commandTests {
-		out, err := r.Read()
+		_, out, err := r.Read()
 		if err != nil {
 			t.Error(err)
 		}
