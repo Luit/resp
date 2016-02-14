@@ -98,7 +98,7 @@ func parseCommand(data []byte) (length int, parts [][]byte, err error) {
 		parts, err = parseInlineCommand(data[:length])
 		return
 	}
-	length += 1
+	length++
 	var (
 		narg   int
 		arglen int

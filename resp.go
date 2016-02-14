@@ -1,4 +1,5 @@
-// resp is a package to read and interpret Redis Serialization Protocol data.
+// Package resp is a package to read and interpret Redis Serialization
+// Protocol data.
 package resp // import "luit.eu/resp"
 
 import (

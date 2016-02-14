@@ -1,8 +1,8 @@
 package resp
 
-// RESPError is an error value that can be directly used as a RESP Error value
-// to a client
-type RESPError interface {
+// Error is an error value that can be directly used as a RESP Error value to
+// a client
+type Error interface {
 	RESP() []byte
 	error
 }

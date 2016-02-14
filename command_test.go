@@ -114,42 +114,15 @@ func (r perByteReader) Read(p []byte) (n int, err error) {
 	return r.r.Read(p)
 }
 
-func TestCommandReader(t *testing.T) {
-	input := new(bytes.Buffer)
-	for _, test := range commandTests {
-		in := test.input
-		if in[len(in)-1] != '\n' {
-			in += "\n"
-		}
-		_, err := input.WriteString(in)
-		if err != nil {
-			t.Fatal(err)
-		}
-	}
-	r := NewCommandReader(perByteReader{r: input})
-	for _, test := range commandTests {
-		_, out, err := r.Read()
-		if err != nil {
-			t.Error(err)
-		}
-		var output []string
-		for _, b := range out {
-			output = append(output, string(b))
-		}
-		if len(test.output) != len(output) {
-			t.Errorf("expected %+#v, got %+#v", test.output, output)
-			continue
-		}
-		for i := range test.output {
-			if test.output[i] != string(output[i]) {
-				t.Errorf("expected %+#v, got %+#v", test.output, output)
-				break
-			}
-		}
-	}
+func TestCommandReaderPerByte(t *testing.T) {
+	readerTest(t, func(r io.Reader) io.Reader { return perByteReader{r: r} })
 }
 
 func TestCommandReaderFullRead(t *testing.T) {
+	readerTest(t, func(r io.Reader) io.Reader { return r })
+}
+
+func readerTest(t *testing.T, f func(io.Reader) io.Reader) {
 	input := new(bytes.Buffer)
 	for _, test := range commandTests {
 		in := test.input
@@ -161,7 +134,7 @@ func TestCommandReaderFullRead(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	r := NewCommandReader(input)
+	r := NewCommandReader(f(input))
 	for _, test := range commandTests {
 		_, out, err := r.Read()
 		if err != nil {
