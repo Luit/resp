@@ -126,7 +126,13 @@ func parseInteger(data []byte) (length int, n int, err error) {
 		prev int
 		pos  int
 	)
+	var neg bool
 	for pos < length-2 {
+		if pos == 0 && data[pos] == '-' && length > 3 {
+			neg = true
+			pos++
+			continue
+		}
 		if !('0' <= data[pos] && data[pos] <= '9') {
 			err = errInvalidInt
 			return
@@ -139,6 +145,9 @@ func parseInteger(data []byte) (length int, n int, err error) {
 			return
 		}
 		pos++
+	}
+	if neg {
+		n = 0 - n
 	}
 	return
 }
@@ -155,12 +164,19 @@ func parseBulkString(data []byte) (length int, part []byte, err error) {
 	if err != nil {
 		return
 	}
-	if len(data) < length+n+2 {
-		err = errIncomplete
-		return
+	switch {
+	case n < -1:
+		err = errInvalidBulkLength
+	case n == -1:
+		// nil bulk, so part stays nil
+	default:
+		if len(data) < length+n+2 {
+			err = errIncomplete
+			return
+		}
+		part = data[length : length+n]
+		length += n + 2
 	}
-	part = data[length : length+n]
-	length += n + 2
 	return
 }
 

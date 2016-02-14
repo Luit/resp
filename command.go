@@ -119,6 +119,9 @@ func parseCommandPart(data []byte) (length int, part []byte, err error) {
 	}
 	length, part, err = parseBulkString(data[1:])
 	length++ // the '$' in front
+	if err == nil && part == nil {
+		err = errInvalidBulkLength
+	}
 	return
 }
 

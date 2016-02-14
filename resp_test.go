@@ -9,6 +9,9 @@ import (
 var tests = []string{
 	"+OK\r\n",
 	"-ERR something\r\n",
+	":-1\r\n",
+	"$-1\r\n",
+	"$0\r\n\r\n",
 	":12345\r\n",
 	"*3\r\n:1\r\n:2\r\n:3\r\n",
 	"*2\r\n$3\r\nGET\r\n$4\r\ntest\r\n",
@@ -18,10 +21,10 @@ func TestParse(t *testing.T) {
 	for _, test := range tests {
 		length, err := parse([]byte(test))
 		if err != nil {
-			t.Error(err)
+			t.Errorf("%q error: %v", test, err)
 		}
 		if length != len(test) {
-			t.Errorf("wrong length, expected %d, got %d", len(test), length)
+			t.Errorf("%q wrong length, expected %d, got %d", test, len(test), length)
 		}
 	}
 }

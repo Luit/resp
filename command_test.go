@@ -80,7 +80,7 @@ func TestParseCommand(t *testing.T) {
 		}
 		length, out, err := parseCommand(cmd)
 		if err != nil {
-			t.Error(err)
+			t.Errorf("%q error: %v", string(cmd), err)
 			continue
 		}
 		var output []string
@@ -88,17 +88,17 @@ func TestParseCommand(t *testing.T) {
 			output = append(output, string(b))
 		}
 		if len(test.output) != len(output) {
-			t.Errorf("expected %+#v, got %+#v", test.output, output)
+			t.Errorf("%q expected %+#v, got %+#v", string(cmd), test.output, output)
 			continue
 		}
 		for i := range test.output {
 			if test.output[i] != string(output[i]) {
-				t.Errorf("expected %+#v, got %+#v", test.output, output)
+				t.Errorf("%q expected %+#v, got %+#v", string(cmd), test.output, output)
 				break
 			}
 		}
 		if length != len(cmd) {
-			t.Errorf("expected length %d, got %d", len(test.input)+1, length)
+			t.Errorf("%q expected length %d, got %d", string(cmd), len(test.input)+1, length)
 		}
 	}
 }
