@@ -65,3 +65,18 @@ func readerTest(t *testing.T, f func(io.Reader) io.Reader) {
 		}
 	}
 }
+
+func TestInvalid(t *testing.T) {
+	tests := []string{
+		":asdf\r\n",
+		":\r\n",
+		":9223372036854775809\r\n",
+		"hoi",
+	}
+	for _, test := range tests {
+		_, err := parse([]byte(test))
+		if err == nil {
+			t.Errorf("input %q expected error, got nil", test)
+		}
+	}
+}
