@@ -114,7 +114,7 @@ func parseCommandPart(data []byte) (length int, part []byte, err error) {
 			// prevent newlines in error; invalid in protocol
 			c = ' '
 		}
-		err = respError("ERR Protocol error: expected '$', got '" + string(c) + "'")
+		err = Error("ERR Protocol error: expected '$', got '" + string(c) + "'")
 		return
 	}
 	length, part, err = parseBulkString(data[1:])
