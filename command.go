@@ -2,7 +2,6 @@ package resp
 
 import (
 	"bytes"
-	"errors"
 	"io"
 )
 
@@ -27,7 +26,7 @@ func (r *CommandReader) Read() (data []byte, parts [][]byte, err error) {
 	var length int
 	for err == nil {
 		length, parts, err = parseCommand(r.buf.Bytes())
-		if err == errIncompleteCommand {
+		if err == errIncomplete {
 			err = r.readmore()
 		} else if err == nil {
 			break
@@ -57,15 +56,13 @@ func (r *CommandReader) readmore() (err error) {
 	return
 }
 
-var errIncompleteCommand = errors.New("incomplete command")
-
 // parseCommand parses a Redis Serialisation Protocol Command, returning the
 // length of the first Command that is present in data, and a slice parts of
 // the interpreted command. The slices in slice parts can be subslices of
 // slice data.
 func parseCommand(data []byte) (length int, parts [][]byte, err error) {
 	if len(data) < 1 {
-		err = errIncompleteCommand
+		err = errIncomplete
 		return
 	}
 	if data[0] != '*' {
@@ -73,7 +70,7 @@ func parseCommand(data []byte) (length int, parts [][]byte, err error) {
 		for pos < len(data) {
 			newline := bytes.IndexByte(data[pos:], '\n')
 			if newline == -1 {
-				err = errIncompleteCommand
+				err = errIncomplete
 				return
 			}
 			blank := true
@@ -89,7 +86,7 @@ func parseCommand(data []byte) (length int, parts [][]byte, err error) {
 			}
 			pos += newline + 1
 			if pos >= len(data) {
-				err = errIncompleteCommand
+				err = errIncomplete
 				return
 			}
 		}
@@ -128,7 +125,7 @@ func parseCommand(data []byte) (length int, parts [][]byte, err error) {
 
 func parseCommandPart(data []byte) (length int, part []byte, err error) {
 	if len(data) < 1 {
-		err = errIncompleteCommand
+		err = errIncomplete
 		return
 	}
 	if data[0] != '$' {
@@ -140,25 +137,8 @@ func parseCommandPart(data []byte) (length int, part []byte, err error) {
 		err = respError("ERR Protocol error: expected '$', got '" + string(c) + "'")
 		return
 	}
-	length += 1
-	var (
-		intlen int
-		n      int
-	)
-	intlen, n, err = parseInteger(data[1:])
-	if err == errInvalidInt || n > 512*1024*1024 {
-		err = errInvalidBulkLength
-	}
-	if err != nil {
-		return
-	}
-	length += intlen
-	if len(data) < length+n+2 {
-		err = errIncompleteCommand
-		return
-	}
-	part = data[length : length+n]
-	length += n + 2
+	length, part, err = parseBulkString(data[1:])
+	length++ // the '$' in front
 	return
 }
 

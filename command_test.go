@@ -207,8 +207,8 @@ func TestIncompleteCommand(t *testing.T) {
 	for _, test := range tests {
 		for n := len(test); n > 0; n-- {
 			_, _, err := parseCommand([]byte(test[:n]))
-			if err != errIncompleteCommand {
-				t.Errorf("expected errUnbalancedQuotes, got %v", err)
+			if err != errIncomplete {
+				t.Errorf("expected errIncomplete, got %v", err)
 			}
 		}
 	}

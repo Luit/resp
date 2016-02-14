@@ -6,7 +6,10 @@ import (
 	"errors"
 )
 
-var errInvalidInt = errors.New("invalid integer")
+var (
+	errInvalidInt = errors.New("invalid integer")
+	errIncomplete = errors.New("incomplete")
+)
 
 // parseInteger parses an integer + "\r\n" from data, returning the length of
 // bytes parsed from data and the parsed integer.
@@ -16,7 +19,7 @@ func parseInteger(data []byte) (length int, n int, err error) {
 		// bytes.IndexByte was -1, so no \n present, or \r was found,
 		// but not enough data to include \n
 		length = 0
-		err = errIncompleteCommand
+		err = errIncomplete
 		return
 	}
 	if length == 2 {
@@ -42,5 +45,26 @@ func parseInteger(data []byte) (length int, n int, err error) {
 		}
 		pos++
 	}
+	return
+}
+
+func parseBulkString(data []byte) (length int, part []byte, err error) {
+	var (
+		n int
+	)
+	length, n, err = parseInteger(data)
+	// TODO: find out definite limits of stuff like this
+	if err == errInvalidInt || n > 512*1024*1024 {
+		err = errInvalidBulkLength
+	}
+	if err != nil {
+		return
+	}
+	if len(data) < length+n+2 {
+		err = errIncomplete
+		return
+	}
+	part = data[length : length+n]
+	length += n + 2
 	return
 }
