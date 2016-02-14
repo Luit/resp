@@ -16,6 +16,7 @@ func (e Error) RESP() []byte {
 	return append(append([]byte{'-'}, string(e)...), "\r\n"...)
 }
 
+// Prefix returns the RESP Error Prefix.
 func (e Error) Prefix() string {
 	n := strings.IndexByte(string(e), ' ')
 	if n == -1 {
