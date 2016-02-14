@@ -6,7 +6,7 @@ import (
 )
 
 // CommandReader is a reader you can use to read from a socket in a way
-// similar to what the Redis server does.
+// similar to what the Redis server does when listening for commands.
 type CommandReader struct {
 	r   io.Reader
 	buf *bytes.Buffer
@@ -27,32 +27,12 @@ func (r *CommandReader) Read() (data []byte, parts [][]byte, err error) {
 	for err == nil {
 		length, parts, err = parseCommand(r.buf.Bytes())
 		if err == errIncomplete {
-			err = r.readmore()
+			err = readmore(r.r, r.buf)
 		} else if err == nil {
 			break
 		}
 	}
 	data = r.buf.Next(length)
-	return
-}
-
-func (r *CommandReader) readmore() (err error) {
-	defer func() {
-		if perr := recover(); perr != nil {
-			if perr == bytes.ErrTooLarge {
-				err = bytes.ErrTooLarge
-			} else {
-				panic(perr)
-			}
-		}
-	}()
-	buf := make([]byte, 1024)
-	var n int
-	n, err = r.r.Read(buf)
-	if err != nil {
-		return
-	}
-	_, err = r.buf.Write(buf[:n])
 	return
 }
 

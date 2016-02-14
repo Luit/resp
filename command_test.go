@@ -103,26 +103,15 @@ func TestParseCommand(t *testing.T) {
 	}
 }
 
-type perByteReader struct {
-	r io.Reader
-}
-
-func (r perByteReader) Read(p []byte) (n int, err error) {
-	if len(p) > 1 {
-		p = p[:1]
-	}
-	return r.r.Read(p)
-}
-
 func TestCommandReaderPerByte(t *testing.T) {
-	readerTest(t, func(r io.Reader) io.Reader { return perByteReader{r: r} })
+	commandReaderTest(t, func(r io.Reader) io.Reader { return perByteReader{r: r} })
 }
 
 func TestCommandReaderFullRead(t *testing.T) {
-	readerTest(t, func(r io.Reader) io.Reader { return r })
+	commandReaderTest(t, func(r io.Reader) io.Reader { return r })
 }
 
-func readerTest(t *testing.T, f func(io.Reader) io.Reader) {
+func commandReaderTest(t *testing.T, f func(io.Reader) io.Reader) {
 	input := new(bytes.Buffer)
 	for _, test := range commandTests {
 		in := test.input
