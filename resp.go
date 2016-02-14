@@ -15,7 +15,7 @@ var (
 )
 
 // Reader is a reader you can use to read from a socket in a way similar to
-// what the Redis client does when listening for responses to commands.
+// what the Redis client does when listening for responses from a server.
 type Reader struct {
 	r   io.Reader
 	buf *bytes.Buffer
